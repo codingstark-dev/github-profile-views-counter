@@ -16,130 +16,236 @@ app.get("/", (c) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Badge Generator</title>
         <style>
+          :root {
+            --primary: #0366d6;
+            --gray: #586069;
+            --border: #e1e4e8;
+            --input-bg: #f6f8fa;
+          }
+          * {
+            box-sizing: border-box;
+          }
           body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
+            background: #fafbfc;
+            color: #24292e;
+            line-height: 1.5;
+          }
+          h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 2rem;
+          }
+          .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            padding: 24px;
           }
           .preview {
             margin: 20px 0;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            background: var(--input-bg);
+          }
+          .preview img {
+            max-width: 100%;
+            height: auto;
+            transition: opacity 0.3s;
+          }
+          .preview.loading img {
+            opacity: 0.5;
           }
           .controls {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
           }
-          .controls label {
+          .control-group {
+            margin-bottom: 8px;
+          }
+          .control-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--gray);
+          }
+          input, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var (--border);
+            border-radius: 6px;
+            background: var(--input-bg);
+            font-size: 14px;
+            transition: border-color 0.2s;
+          }
+          input:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
           }
           .url-box {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 12px;
+            margin: 16px 0;
             font-family: monospace;
-          }
-          button {
-            padding: 8px 16px;
-            background: #0366d6;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-          }
-          button:hover {
-            background: #0255b3;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
           }
           .tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
           }
           .tabs button {
-            background: #eee;
-            color: #333;
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+          }
+          .tabs button:hover {
+            color: var(--primary);
           }
           .tabs button.active {
-            background: #0366d6;
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+          }
+          .copy-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
             color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+          }
+          .copy-btn:hover {
+            background: #0255b3;
+          }
+          @media (max-width: 600px) {
+            body {
+              padding: 12px;
+            }
+            .container {
+              padding: 16px;
+            }
+            .controls {
+              grid-template-columns: 1fr;
+            }
           }
         </style>
       </head>
       <body>
         <h1>Badge Generator</h1>
-        
-        <div class="tabs">
-          <button onclick="switchTab('visitor')" class="active">Visitor Badge</button>
-          <button onclick="switchTab('ai')">AI Badge</button>
-        </div>
+        <div class="container">
+          <div class="tabs">
+            <button onclick="switchTab('visitor')" class="active">Visitor Badge</button>
+            <button onclick="switchTab('ai')">AI Badge</button>
+          </div>
 
-        <div id="visitor-tab">
-          <div class="controls">
-            <div>
-              <label>Repository:</label>
-              <input type="text" id="repo" placeholder="username/repo" />
-            </div>
-            <div>
-              <label>Style:</label>
-              <select id="style">
-                <option value="flat">Flat</option>
-                <option value="flat-square">Flat Square</option>
-                <option value="plastic">Plastic</option>
-                <option value="for-the-badge">For the Badge</option>
-                <option value="social">Social</option>
-              </select>
-            </div>
-            <div>
-              <label>Color:</label>
-              <input type="text" id="color" value="blue" />
-            </div>
-            <div>
-              <label>Label:</label>
-              <input type="text" id="label" value="Profile views" />
+          <div id="visitor-tab">
+            <div class="controls">
+              <div class="control-group">
+                <label>Repository:</label>
+                <input type="text" id="repo" placeholder="username/repo" />
+              </div>
+              <div class="control-group">
+                <label>Style:</label>
+                <select id="style">
+                  <option value="flat">Flat</option>
+                  <option value="flat-square">Flat Square</option>
+                  <option value="plastic">Plastic</option>
+                  <option value="for-the-badge">For the Badge</option>
+                  <option value="social">Social</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label>Color:</label>
+                <input type="text" id="color" value="blue" />
+              </div>
+              <div class="control-group">
+                <label>Label:</label>
+                <input type="text" id="label" value="Profile views" />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div id="ai-tab" style="display:none">
-          <div class="controls">
-            <div>
-              <label>Prompt:</label>
-              <input type="text" id="prompt" placeholder="Generate a message..." />
-            </div>
-            <div>
-              <label>Style:</label>
-              <select id="ai-style">
-                <option value="flat">Flat</option>
-                <option value="flat-square">Flat Square</option>
-                <option value="plastic">Plastic</option>
-                <option value="for-the-badge">For the Badge</option>
-                <option value="social">Social</option>
-              </select>
-            </div>
-            <div>
-              <label>Color:</label>
-              <input type="text" id="ai-color" value="blue" />
+          <div id="ai-tab" style="display:none">
+            <div class="controls">
+              <div class="control-group">
+                <label>Prompt:</label>
+                <input type="text" id="prompt" placeholder="Generate a message..." />
+              </div>
+              <div class="control-group">
+                <label>Style:</label>
+                <select id="ai-style">
+                  <option value="flat">Flat</option>
+                  <option value="flat-square">Flat Square</option>
+                  <option value="plastic">Plastic</option>
+                  <option value="for-the-badge">For the Badge</option>
+                  <option value="social">Social</option>
+                </select>
+              </div>
+              <div class="control-group">
+                <label>Color:</label>
+                <input type="text" id="ai-color" value="blue" />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="preview">
-          <h3>Preview:</h3>
-          <img id="preview" src="" alt="Badge preview" />
-        </div>
+          <div class="preview">
+            <img id="preview" src="" alt="Badge preview" />
+          </div>
 
-        <input type="text" id="url" class="url-box" readonly />
-        <button onclick="copyUrl()">Copy URL</button>
+          <input type="text" id="url" class="url-box" readonly />
+          <button onclick="copyUrl()" class="copy-btn">Copy URL</button>
+        </div>
 
         <script>
           let currentTab = 'visitor';
+          let updateTimeout;
           
-          function updatePreview() {
+          function debounce(func, wait) {
+            return function executedFunction(...args) {
+              const later = () => {
+                clearTimeout(updateTimeout);
+                func(...args);
+              };
+              clearTimeout(updateTimeout);
+              updateTimeout = setTimeout(later, wait);
+            };
+          }
+          
+          const setPreviewLoading = (loading) => {
+            const preview = document.querySelector('.preview');
+            if (loading) {
+              preview.classList.add('loading');
+            } else {
+              preview.classList.remove('loading');
+            }
+          };
+          
+          const debouncedUpdatePreview = debounce(() => {
+            setPreviewLoading(true);
             const baseUrl = window.location.origin;
             let url;
             
@@ -158,9 +264,12 @@ app.get("/", (c) => {
               url = \`\${baseUrl}/ai-badge?prompt=\${encodeURIComponent(prompt)}&style=\${style}&color=\${color}\`;
             }
             
-            document.getElementById('preview').src = url;
+            const previewImg = document.getElementById('preview');
+            previewImg.onload = () => setPreviewLoading(false);
+            previewImg.onerror = () => setPreviewLoading(false);
+            previewImg.src = url;
             document.getElementById('url').value = url;
-          }
+          }, 500);
 
           function switchTab(tab) {
             currentTab = tab;
@@ -171,22 +280,29 @@ app.get("/", (c) => {
             tabs.forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             
-            updatePreview();
+            debouncedUpdatePreview();
           }
 
           function copyUrl() {
             const urlInput = document.getElementById('url');
             urlInput.select();
             document.execCommand('copy');
+            
+            const btn = document.querySelector('.copy-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => {
+              btn.textContent = originalText;
+            }, 2000);
           }
 
-          // Add event listeners to all inputs
+          // Add event listeners to all inputs with debounce
           document.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('input', updatePreview);
+            input.addEventListener('input', debouncedUpdatePreview);
           });
 
           // Initial preview
-          updatePreview();
+          debouncedUpdatePreview();
         </script>
       </body>
     </html>
