@@ -23,8 +23,8 @@ function getErrorBadgeSVG(message: string) {
 async function rateLimit(c: any, next: () => Promise<any>) {
   const ip = c.req.raw.headers.get("cf-connecting-ip") || "unknown";
   const KEY_PREFIX = "ratelimit:";
-  const LIMIT = 10;
-  const WINDOW = 300; 
+  const LIMIT = 60;
+  const WINDOW = 60; 
 
   try {
     const key = `${KEY_PREFIX}${ip}`;
@@ -327,11 +327,9 @@ app.get("/visitor-badge/:repo", async (c) => {
       return new Response(svg, {
         headers: {
           "Content-Type": "image/svg+xml; charset=utf-8",
-          "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
-          "CDN-Cache-Control": "max-age=60",
-          "Surrogate-Control": "max-age=60",
-          "Edge-Control": "max-age=60",
-          "Age": "0",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
           "Vary": "Accept-Encoding",
           "ETag": `"${count}"`
         },
@@ -468,8 +466,9 @@ app.get("/ai-badge", async (c) => {
     return new Response(svg, {
       headers: {
         "Content-Type": "image/svg+xml; charset=utf-8",
-        "Cache-Control": "public, max-age=1800",
-        "CDN-Cache-Control": "public, max-age=1800",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
       },
     });
 
