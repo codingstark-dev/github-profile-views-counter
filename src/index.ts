@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { html } from "hono/html";
 
 const app = new Hono<{ Bindings: Env }>();
 interface Env {
@@ -7,7 +8,189 @@ interface Env {
   RATELIMIT_KV: KVNamespace;
 }
 app.get("/", (c) => {
-  return c.text("Hello Hono!");
+  return c.html(html`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Badge Generator</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .preview {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          }
+          .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+          }
+          .controls label {
+            display: block;
+            margin-bottom: 5px;
+          }
+          .url-box {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+          }
+          button {
+            padding: 8px 16px;
+            background: #0366d6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          }
+          button:hover {
+            background: #0255b3;
+          }
+          .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+          }
+          .tabs button {
+            background: #eee;
+            color: #333;
+          }
+          .tabs button.active {
+            background: #0366d6;
+            color: white;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Badge Generator</h1>
+        
+        <div class="tabs">
+          <button onclick="switchTab('visitor')" class="active">Visitor Badge</button>
+          <button onclick="switchTab('ai')">AI Badge</button>
+        </div>
+
+        <div id="visitor-tab">
+          <div class="controls">
+            <div>
+              <label>Repository:</label>
+              <input type="text" id="repo" placeholder="username/repo" />
+            </div>
+            <div>
+              <label>Style:</label>
+              <select id="style">
+                <option value="flat">Flat</option>
+                <option value="flat-square">Flat Square</option>
+                <option value="plastic">Plastic</option>
+                <option value="for-the-badge">For the Badge</option>
+                <option value="social">Social</option>
+              </select>
+            </div>
+            <div>
+              <label>Color:</label>
+              <input type="text" id="color" value="blue" />
+            </div>
+            <div>
+              <label>Label:</label>
+              <input type="text" id="label" value="Profile views" />
+            </div>
+          </div>
+        </div>
+
+        <div id="ai-tab" style="display:none">
+          <div class="controls">
+            <div>
+              <label>Prompt:</label>
+              <input type="text" id="prompt" placeholder="Generate a message..." />
+            </div>
+            <div>
+              <label>Style:</label>
+              <select id="ai-style">
+                <option value="flat">Flat</option>
+                <option value="flat-square">Flat Square</option>
+                <option value="plastic">Plastic</option>
+                <option value="for-the-badge">For the Badge</option>
+                <option value="social">Social</option>
+              </select>
+            </div>
+            <div>
+              <label>Color:</label>
+              <input type="text" id="ai-color" value="blue" />
+            </div>
+          </div>
+        </div>
+
+        <div class="preview">
+          <h3>Preview:</h3>
+          <img id="preview" src="" alt="Badge preview" />
+        </div>
+
+        <input type="text" id="url" class="url-box" readonly />
+        <button onclick="copyUrl()">Copy URL</button>
+
+        <script>
+          let currentTab = 'visitor';
+          
+          function updatePreview() {
+            const baseUrl = window.location.origin;
+            let url;
+            
+            if (currentTab === 'visitor') {
+              const repo = document.getElementById('repo').value || 'username/repo';
+              const style = document.getElementById('style').value;
+              const color = document.getElementById('color').value;
+              const label = document.getElementById('label').value;
+              
+              url = \`\${baseUrl}/visitor-badge/\${repo}?style=\${style}&color=\${color}&label=\${encodeURIComponent(label)}\`;
+            } else {
+              const prompt = document.getElementById('prompt').value || 'Generate a message';
+              const style = document.getElementById('ai-style').value;
+              const color = document.getElementById('ai-color').value;
+              
+              url = \`\${baseUrl}/ai-badge?prompt=\${encodeURIComponent(prompt)}&style=\${style}&color=\${color}\`;
+            }
+            
+            document.getElementById('preview').src = url;
+            document.getElementById('url').value = url;
+          }
+
+          function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('visitor-tab').style.display = tab === 'visitor' ? 'block' : 'none';
+            document.getElementById('ai-tab').style.display = tab === 'ai' ? 'block' : 'none';
+            
+            const tabs = document.querySelectorAll('.tabs button');
+            tabs.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            updatePreview();
+          }
+
+          function copyUrl() {
+            const urlInput = document.getElementById('url');
+            urlInput.select();
+            document.execCommand('copy');
+          }
+
+          // Add event listeners to all inputs
+          document.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('input', updatePreview);
+          });
+
+          // Initial preview
+          updatePreview();
+        </script>
+      </body>
+    </html>
+  `);
 });
 
 function getErrorBadgeSVG(message: string) {
@@ -23,14 +206,15 @@ function getErrorBadgeSVG(message: string) {
 const commonHeaders = {
   "Content-Type": "image/svg+xml",
   "Cache-Control": "no-cache, max-age=0, must-revalidate",
-  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
+  "content-security-policy":
+    "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
   "x-content-type-options": "nosniff",
   "x-frame-options": "deny",
   "x-xss-protection": "1; mode=block",
   "Access-Control-Allow-Origin": "*",
   "Cross-Origin-Resource-Policy": "cross-origin",
-  "Pragma": "no-cache",
-  "Expires": "0"
+  Pragma: "no-cache",
+  Expires: "0",
 };
 
 async function rateLimit(c: any, next: () => Promise<any>) {
@@ -84,27 +268,25 @@ async function rateLimit(c: any, next: () => Promise<any>) {
 
     const response = await next();
     const headers = new Headers(response.headers);
-    
-    
+
     Object.entries(commonHeaders).forEach(([key, value]) => {
       if (!headers.has(key)) {
         headers.set(key, value);
       }
     });
 
-    
     headers.set("X-RateLimit-Limit", LIMIT.toString());
     headers.set("X-RateLimit-Remaining", (LIMIT - count).toString());
     headers.set("X-RateLimit-Reset", resetTime.toString());
 
     return new Response(response.body, {
       status: response.status,
-      headers
+      headers,
     });
   } catch (error) {
     console.error("Rate limit error:", error);
     return new Response(getErrorBadgeSVG("Rate Limit Error"), {
-      headers: commonHeaders
+      headers: commonHeaders,
     });
   }
 }
@@ -283,82 +465,85 @@ async function getGitHubUser(username: string): Promise<GitHubUser | null> {
   }
 }
 
+function isGitHubRequest(request: Request): boolean {
+  const userAgent = request.headers.get("user-agent") || "";
+  const via = request.headers.get("via") || "";
+
+  return userAgent.startsWith("github-camo") && via.includes("github-camo");
+}
+
 app.get("/visitor-badge/:repo", async (c) => {
   try {
     const rateLimitResponse = await rateLimit(c, async () => {
       const repo = c.req.param("repo");
       const username = repo.split("/")[0];
+      const isGitHub = isGitHubRequest(c.req.raw);
 
-      
       const cachedCount = await c.env.RATELIMIT_KV.get(`views:${repo}`);
       let count = cachedCount ? parseInt(cachedCount) : 0;
 
-      
-      c.executionCtx.waitUntil(
-        (async () => {
-          const [userResult, visitorResult] = await Promise.all([
-            c.env.DB.prepare(
-              `
-            SELECT * FROM github_users 
-            WHERE username = ?1 
-            AND (julianday(CURRENT_TIMESTAMP) - julianday(last_updated)) * 24 < 24
-          `
-            )
-              .bind(username)
-              .first(),
-
-            c.env.DB.prepare(
-              `
-            INSERT INTO visitors (repo, count, last_updated) 
-            VALUES (?1, 1, CURRENT_TIMESTAMP)
-            ON CONFLICT(repo) DO UPDATE SET 
-            count = count + 1,
-            last_updated = CURRENT_TIMESTAMP
-            RETURNING count
-          `
-            )
-              .bind(repo)
-              .first(),
-          ]);
-
-          if (!userResult) {
-            const githubUser = await getGitHubUser(username);
-            if (githubUser) {
-              await c.env.DB.prepare(
+      if (isGitHub) {
+        c.executionCtx.waitUntil(
+          (async () => {
+            const [userResult, visitorResult] = await Promise.all([
+              c.env.DB.prepare(
                 `
-              INSERT INTO github_users (username, followers, following, last_updated)
-              VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
-              ON CONFLICT(username) DO UPDATE SET
-              followers = ?2,
-              following = ?3,
-              last_updated = CURRENT_TIMESTAMP
+              SELECT * FROM github_users 
+              WHERE username = ?1 
+              AND (julianday(CURRENT_TIMESTAMP) - julianday(last_updated)) * 24 < 24
             `
               )
-                .bind(username, githubUser.followers, githubUser.following)
-                .run();
+                .bind(username)
+                .first(),
+
+              c.env.DB.prepare(
+                `
+              INSERT INTO visitors (repo, count, last_updated) 
+              VALUES (?1, 1, CURRENT_TIMESTAMP)
+              ON CONFLICT(repo) DO UPDATE SET 
+              count = count + 1,
+              last_updated = CURRENT_TIMESTAMP
+              RETURNING count
+            `
+              )
+                .bind(repo)
+                .first(),
+            ]);
+
+            if (!userResult) {
+              const githubUser = await getGitHubUser(username);
+              if (githubUser) {
+                await c.env.DB.prepare(
+                  `
+                INSERT INTO github_users (username, followers, following, last_updated)
+                VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
+                ON CONFLICT(username) DO UPDATE SET
+                followers = ?2,
+                following = ?3,
+                last_updated = CURRENT_TIMESTAMP
+              `
+                )
+                  .bind(username, githubUser.followers, githubUser.following)
+                  .run();
+              }
             }
-          }
 
-          
-          const newCount = visitorResult?.count || 1;
-          await c.env.RATELIMIT_KV.put(`views:${repo}`, newCount.toString(), {
-            expirationTtl: 60, 
-          });
-        })()
-      );
+            const newCount = visitorResult?.count || 1;
+            await c.env.RATELIMIT_KV.put(`views:${repo}`, newCount.toString(), {
+              expirationTtl: 60,
+            });
+          })()
+        );
+      }
 
-      
-      if (!cachedCount) {
+      if (!cachedCount && isGitHub) {
         const result = await c.env.DB.prepare(
-          `
-          SELECT count FROM visitors WHERE repo = ?1
-        `
+          `SELECT count FROM visitors WHERE repo = ?1`
         )
           .bind(repo)
           .first();
         count = (result?.count as number) || 1;
 
-        
         await c.env.RATELIMIT_KV.put(`views:${repo}`, count.toString(), {
           expirationTtl: 60,
         });
@@ -385,7 +570,7 @@ app.get("/visitor-badge/:repo", async (c) => {
         headers: {
           ...commonHeaders,
           ETag: `"${count}"`,
-        }
+        },
       });
     });
 
@@ -394,7 +579,7 @@ app.get("/visitor-badge/:repo", async (c) => {
     console.error("Visitor badge error:", error);
     return new Response(getErrorBadgeSVG("Server Error"), {
       status: 500,
-      headers: commonHeaders
+      headers: commonHeaders,
     });
   }
 });
@@ -458,35 +643,45 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
 
 app.get("/ai-badge", async (c) => {
   const ip = c.req.raw.headers.get("cf-connecting-ip") || "unknown";
+  const prompt =
+    c.req.query("prompt") || "Generate a short inspirational message";
+  const cacheKey = `ai:${prompt}`;
+  const rateLimitKey = `ai:ratelimit:${ip}`;
 
   try {
-    const result = await c.env.DB.prepare(
-      `
-      SELECT COUNT(*) as count FROM rate_limits 
-      WHERE ip = ?1 
-      AND (julianday(CURRENT_TIMESTAMP) - julianday(last_reset)) * 24 * 60 < 1
-    `
-    )
-      .bind(ip)
-      .first();
-
-    if (((result?.count as number) || 0) >= 5) {
-      return new Response(getErrorBadgeSVG("Rate Limited"), {
-        status: 429,
-        headers: {
-          "Content-Type": "image/svg+xml; charset=utf-8",
-          "Retry-After": "60",
-        },
-      });
+    const rateLimitData = await c.env.RATELIMIT_KV.get(rateLimitKey);
+    if (rateLimitData) {
+      const { count, timestamp } = JSON.parse(rateLimitData);
+      const now = Date.now();
+      if (now - timestamp < 60000) {
+        if (count >= 5) {
+          return new Response(getErrorBadgeSVG("Rate Limited"), {
+            status: 429,
+            headers: {
+              ...commonHeaders,
+              "Retry-After": "60",
+            },
+          });
+        }
+      }
     }
 
-    const prompt =
-      c.req.query("prompt") || "Generate a short inspirational message";
-    const style = (c.req.query("style") as BadgeStyle["style"]) || "flat";
-    const color = c.req.query("color") || "blue";
-    const labelColor = c.req.query("label_color") || "gray";
-    const label = c.req.query("label") || "AI Says";
-    const scale = Number(c.req.query("scale")) || 1.5;
+    const cachedResponse = await c.env.RATELIMIT_KV.get(cacheKey);
+    if (cachedResponse) {
+      c.executionCtx.waitUntil(
+        updateRateLimit(c.env.RATELIMIT_KV, rateLimitKey)
+      );
+
+      const svg = getAIBadgeSVG(cachedResponse, {
+        style: (c.req.query("style") as BadgeStyle["style"]) || "flat",
+        color: c.req.query("color") || "blue",
+        labelColor: c.req.query("label_color") || "gray",
+        label: c.req.query("label") || "AI Says",
+        scale: Number(c.req.query("scale")) || 1.5,
+      });
+
+      return new Response(svg, { headers: commonHeaders });
+    }
 
     const response = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
       messages: [
@@ -507,23 +702,47 @@ app.get("/ai-badge", async (c) => {
       aiText = String(response);
     }
 
+    c.executionCtx.waitUntil(
+      Promise.all([
+        c.env.RATELIMIT_KV.put(cacheKey, aiText, { expirationTtl: 900 }),
+        updateRateLimit(c.env.RATELIMIT_KV, rateLimitKey),
+      ])
+    );
+
     const svg = getAIBadgeSVG(aiText, {
-      style,
-      color,
-      labelColor,
-      label,
-      scale,
+      style: (c.req.query("style") as BadgeStyle["style"]) || "flat",
+      color: c.req.query("color") || "blue",
+      labelColor: c.req.query("label_color") || "gray",
+      label: c.req.query("label") || "AI Says",
+      scale: Number(c.req.query("scale")) || 1.5,
     });
 
-    return new Response(svg, {
-      headers: commonHeaders
-    });
+    return new Response(svg, { headers: commonHeaders });
   } catch (error) {
     console.error("AI badge error:", error);
     return new Response(getErrorBadgeSVG("AI Error"), {
-      headers: { "Content-Type": "image/svg+xml; charset=utf-8" },
+      headers: commonHeaders,
     });
   }
 });
+
+async function updateRateLimit(kv: KVNamespace, key: string) {
+  const current = await kv.get(key);
+  const now = Date.now();
+  let data;
+
+  if (current) {
+    data = JSON.parse(current);
+    if (now - data.timestamp >= 60000) {
+      data = { count: 1, timestamp: now };
+    } else {
+      data.count += 1;
+    }
+  } else {
+    data = { count: 1, timestamp: now };
+  }
+
+  await kv.put(key, JSON.stringify(data), { expirationTtl: 60 });
+}
 
 export default app;
