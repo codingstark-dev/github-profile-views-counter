@@ -1,4 +1,4 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
 
 const app = new Hono<{ Bindings: Env }>();
 interface Env {
@@ -6,9 +6,9 @@ interface Env {
   DB: D1Database;
   RATELIMIT_KV: KVNamespace;
 }
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+app.get("/", (c) => {
+  return c.text("Hello Hono!");
+});
 
 function getErrorBadgeSVG(message: string) {
   return getBadgeSVG(0, {
@@ -16,21 +16,34 @@ function getErrorBadgeSVG(message: string) {
     color: "red",
     labelColor: "gray",
     style: "flat",
-    message: message  
+    message: message,
   });
 }
+
+const commonHeaders = {
+  "Content-Type": "image/svg+xml",
+  "Cache-Control": "no-cache, max-age=0, must-revalidate",
+  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "deny",
+  "x-xss-protection": "1; mode=block",
+  "Access-Control-Allow-Origin": "*",
+  "Cross-Origin-Resource-Policy": "cross-origin",
+  "Pragma": "no-cache",
+  "Expires": "0"
+};
 
 async function rateLimit(c: any, next: () => Promise<any>) {
   const ip = c.req.raw.headers.get("cf-connecting-ip") || "unknown";
   const KEY_PREFIX = "ratelimit:";
   const LIMIT = 60;
-  const WINDOW = 60; 
+  const WINDOW = 60;
 
   try {
     const key = `${KEY_PREFIX}${ip}`;
     const currentValue = await c.env.RATELIMIT_KV.get(key);
     const now = Math.floor(Date.now() / 1000);
-    
+
     let count: number;
     let resetTime: number;
 
@@ -38,7 +51,7 @@ async function rateLimit(c: any, next: () => Promise<any>) {
       count = 1;
       resetTime = now + WINDOW;
       await c.env.RATELIMIT_KV.put(key, JSON.stringify({ count, resetTime }), {
-        expirationTtl: WINDOW
+        expirationTtl: WINDOW,
       });
     } else {
       const data = JSON.parse(currentValue);
@@ -49,9 +62,9 @@ async function rateLimit(c: any, next: () => Promise<any>) {
         count = data.count + 1;
         resetTime = data.resetTime;
       }
-      
+
       await c.env.RATELIMIT_KV.put(key, JSON.stringify({ count, resetTime }), {
-        expirationTtl: WINDOW
+        expirationTtl: WINDOW,
       });
     }
 
@@ -60,32 +73,41 @@ async function rateLimit(c: any, next: () => Promise<any>) {
       return new Response(getErrorBadgeSVG("Rate Limited"), {
         status: 429,
         headers: {
-          "Content-Type": "image/svg+xml; charset=utf-8",
+          ...commonHeaders,
           "X-RateLimit-Limit": LIMIT.toString(),
           "X-RateLimit-Remaining": "0",
           "X-RateLimit-Reset": resetTime.toString(),
           "Retry-After": remainingTime.toString(),
-          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       });
     }
 
     const response = await next();
+    const headers = new Headers(response.headers);
+    
+    
+    Object.entries(commonHeaders).forEach(([key, value]) => {
+      if (!headers.has(key)) {
+        headers.set(key, value);
+      }
+    });
+
+    
+    headers.set("X-RateLimit-Limit", LIMIT.toString());
+    headers.set("X-RateLimit-Remaining", (LIMIT - count).toString());
+    headers.set("X-RateLimit-Reset", resetTime.toString());
+
     return new Response(response.body, {
       status: response.status,
-      headers: {
-        ...response.headers,
-        "X-RateLimit-Limit": LIMIT.toString(),
-        "X-RateLimit-Remaining": (LIMIT - count).toString(),
-        "X-RateLimit-Reset": resetTime.toString(),
-      },
+      headers
     });
   } catch (error) {
     console.error("Rate limit error:", error);
-    return next(); 
+    return new Response(getErrorBadgeSVG("Rate Limit Error"), {
+      headers: commonHeaders
+    });
   }
 }
-
 
 interface BadgeStyle {
   label?: string;
@@ -127,11 +149,9 @@ function getBadgeSVG(count: number, options: BadgeStyle = {}) {
   const labelText = label.trim();
   const countText = count.toLocaleString();
 
-  
   const bgColor = namedColors[color] || color.replace(/^#/, "");
   const lblColor = namedColors[labelColor] || labelColor.replace(/^#/, "");
 
-  
   const styles = {
     flat: {
       height: 20,
@@ -196,23 +216,45 @@ function getBadgeSVG(count: number, options: BadgeStyle = {}) {
     <stop offset="1" stop-color="#000" stop-opacity=".5"/>
   </linearGradient>
   <clipPath id="r">
-    <rect width="${totalWidth}" height="${height}" rx="${config.radius}" fill="#fff"/>
+    <rect width="${totalWidth}" height="${height}" rx="${
+    config.radius
+  }" fill="#fff"/>
   </clipPath>
   <g clip-path="url(#r)">
     <rect width="${labelWidth}" height="${height}" fill="#${lblColor}"/>
     <rect x="${labelWidth}" width="${countWidth}" height="${height}" fill="#${bgColor}"/>
-    ${config.gradient ? `<rect width="${totalWidth}" height="${height}" fill="url(#s)"/>` : ""}
+    ${
+      config.gradient
+        ? `<rect width="${totalWidth}" height="${height}" fill="url(#s)"/>`
+        : ""
+    }
   </g>
-  ${config.shadow ? `<g fill="#000" fill-opacity=".3">
+  ${
+    config.shadow
+      ? `<g fill="#000" fill-opacity=".3">
     <rect x="1" width="${labelWidth}" height="1"/>
     <rect x="${labelWidth + 1}" width="${countWidth}" height="1"/>
-  </g>` : ""}
-  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${config.fontSize * scale}">
-    ${logo ? `<image x="5" y="${(height - logoWidth) / 2}" width="${logoWidth}" height="${logoWidth}" xlink:href="${logo}"/>` : ""}
-    <text x="${labelWidth / 2 + (logo ? logoWidth : 0)}" y="${height / 2}" dominant-baseline="middle">
+  </g>`
+      : ""
+  }
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${
+    config.fontSize * scale
+  }">
+    ${
+      logo
+        ? `<image x="5" y="${
+            (height - logoWidth) / 2
+          }" width="${logoWidth}" height="${logoWidth}" xlink:href="${logo}"/>`
+        : ""
+    }
+    <text x="${labelWidth / 2 + (logo ? logoWidth : 0)}" y="${
+    height / 2
+  }" dominant-baseline="middle">
       ${config.uppercase ? labelText.toUpperCase() : labelText}
     </text>
-    <text x="${labelWidth + countWidth / 2}" y="${height / 2}" dominant-baseline="middle">
+    <text x="${labelWidth + countWidth / 2}" y="${
+    height / 2
+  }" dominant-baseline="middle">
       ${config.uppercase ? countText.toUpperCase() : countText}
     </text>
   </g>
@@ -229,10 +271,10 @@ async function getGitHubUser(username: string): Promise<GitHubUser | null> {
   try {
     const response = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
-        'User-Agent': 'GitHub-Profile-Views-Counter',
-      }
+        "User-Agent": "GitHub-Profile-Views-Counter",
+      },
     });
-    
+
     if (!response.ok) return null;
     return await response.json();
   } catch (error) {
@@ -245,67 +287,83 @@ app.get("/visitor-badge/:repo", async (c) => {
   try {
     const rateLimitResponse = await rateLimit(c, async () => {
       const repo = c.req.param("repo");
-      const username = repo.split('/')[0];
-      
-      
-      await c.env.DB.batch([
-        c.env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS github_users (
-            username TEXT PRIMARY KEY,
-            followers INTEGER,
-            following INTEGER,
-            last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
-          )
-        `),
-        c.env.DB.prepare(`
-          CREATE TABLE IF NOT EXISTS visitors (
-            repo TEXT PRIMARY KEY,
-            count INTEGER DEFAULT 0,
-            last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
-          )
-        `)
-      ]);
+      const username = repo.split("/")[0];
 
       
-      const [userResult, visitorResult] = await Promise.all([
-        c.env.DB.prepare(`
-          SELECT * FROM github_users 
-          WHERE username = ?1 
-          AND (julianday(CURRENT_TIMESTAMP) - julianday(last_updated)) * 24 < 24
-        `)
-        .bind(username)
-        .first(),
-        
-        c.env.DB.prepare(`
-          INSERT INTO visitors (repo, count, last_updated) 
-          VALUES (?1, 1, CURRENT_TIMESTAMP)
-          ON CONFLICT(repo) DO UPDATE SET 
-          count = count + 1,
-          last_updated = CURRENT_TIMESTAMP
-          RETURNING count
-        `)
-        .bind(repo)
-        .first()
-      ]);
+      const cachedCount = await c.env.RATELIMIT_KV.get(`views:${repo}`);
+      let count = cachedCount ? parseInt(cachedCount) : 0;
 
       
-      if (!userResult) {
-        const githubUser = await getGitHubUser(username);
-        if (githubUser) {
-          await c.env.DB.prepare(`
-            INSERT INTO github_users (username, followers, following, last_updated)
-            VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
-            ON CONFLICT(username) DO UPDATE SET
-            followers = ?2,
-            following = ?3,
+      c.executionCtx.waitUntil(
+        (async () => {
+          const [userResult, visitorResult] = await Promise.all([
+            c.env.DB.prepare(
+              `
+            SELECT * FROM github_users 
+            WHERE username = ?1 
+            AND (julianday(CURRENT_TIMESTAMP) - julianday(last_updated)) * 24 < 24
+          `
+            )
+              .bind(username)
+              .first(),
+
+            c.env.DB.prepare(
+              `
+            INSERT INTO visitors (repo, count, last_updated) 
+            VALUES (?1, 1, CURRENT_TIMESTAMP)
+            ON CONFLICT(repo) DO UPDATE SET 
+            count = count + 1,
             last_updated = CURRENT_TIMESTAMP
-          `)
-          .bind(username, githubUser.followers, githubUser.following)
-          .run();
-        }
+            RETURNING count
+          `
+            )
+              .bind(repo)
+              .first(),
+          ]);
+
+          if (!userResult) {
+            const githubUser = await getGitHubUser(username);
+            if (githubUser) {
+              await c.env.DB.prepare(
+                `
+              INSERT INTO github_users (username, followers, following, last_updated)
+              VALUES (?1, ?2, ?3, CURRENT_TIMESTAMP)
+              ON CONFLICT(username) DO UPDATE SET
+              followers = ?2,
+              following = ?3,
+              last_updated = CURRENT_TIMESTAMP
+            `
+              )
+                .bind(username, githubUser.followers, githubUser.following)
+                .run();
+            }
+          }
+
+          
+          const newCount = visitorResult?.count || 1;
+          await c.env.RATELIMIT_KV.put(`views:${repo}`, newCount.toString(), {
+            expirationTtl: 60, 
+          });
+        })()
+      );
+
+      
+      if (!cachedCount) {
+        const result = await c.env.DB.prepare(
+          `
+          SELECT count FROM visitors WHERE repo = ?1
+        `
+        )
+          .bind(repo)
+          .first();
+        count = (result?.count as number) || 1;
+
+        
+        await c.env.RATELIMIT_KV.put(`views:${repo}`, count.toString(), {
+          expirationTtl: 60,
+        });
       }
 
-      const count = visitorResult?.count || 1;
       const style = (c.req.query("style") as BadgeStyle["style"]) || "flat";
       const color = c.req.query("color") || "blue";
       const labelColor = c.req.query("label_color") || "gray";
@@ -313,7 +371,7 @@ app.get("/visitor-badge/:repo", async (c) => {
       const logo = c.req.query("logo") || "";
       const scale = Number(c.req.query("scale")) || 1;
 
-      const svg = getBadgeSVG(Number(count), {
+      const svg = getBadgeSVG(count, {
         style,
         color,
         labelColor,
@@ -323,16 +381,11 @@ app.get("/visitor-badge/:repo", async (c) => {
         logoWidth: logo ? 14 : 0,
       });
 
-      
       return new Response(svg, {
         headers: {
-          "Content-Type": "image/svg+xml; charset=utf-8",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
-          "Expires": "0",
-          "Vary": "Accept-Encoding",
-          "ETag": `"${count}"`
-        },
+          ...commonHeaders,
+          ETag: `"${count}"`,
+        }
       });
     });
 
@@ -341,20 +394,17 @@ app.get("/visitor-badge/:repo", async (c) => {
     console.error("Visitor badge error:", error);
     return new Response(getErrorBadgeSVG("Server Error"), {
       status: 500,
-      headers: {
-        "Content-Type": "image/svg+xml; charset=utf-8",
-        "Cache-Control": "no-cache"
-      }
+      headers: commonHeaders
     });
   }
 });
 
 function sanitizeText(text: string): string {
   return text
-    .replace(/[<>&'"]/g, '') 
-    .replace(/[^\x20-\x7E]/g, '') 
+    .replace(/[<>&'"]/g, "")
+    .replace(/[^\x20-\x7E]/g, "")
     .trim()
-    .slice(0, 50); 
+    .slice(0, 50);
 }
 
 function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
@@ -366,26 +416,23 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
     scale = 1.5,
   } = options;
 
-  
   const height = 28 * scale;
   const fontSize = 12 * scale;
   const padding = 10 * scale;
-  
+
   const labelText = label.trim();
   const messageText = text.trim();
 
-  
   const labelWidth = Math.max(
-    (labelText.length * fontSize * 0.6 + padding * 2),
+    labelText.length * fontSize * 0.6 + padding * 2,
     80
   );
   const messageWidth = Math.max(
-    (messageText.length * fontSize * 0.6 + padding * 2),
+    messageText.length * fontSize * 0.6 + padding * 2,
     200
   );
   const totalWidth = labelWidth + messageWidth;
 
-  
   const bgColor = namedColors[color] || color.replace(/^#/, "");
   const lblColor = namedColors[labelColor] || labelColor.replace(/^#/, "");
 
@@ -397,10 +444,12 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
     <rect x="${labelWidth}" width="${messageWidth}" height="${height}" fill="#${bgColor}" rx="4"/>
   </g>
   <g fill="#fff" text-anchor="start" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="${fontSize}">
-    <text x="${padding}" y="${height/2}" dominant-baseline="middle">
+    <text x="${padding}" y="${height / 2}" dominant-baseline="middle">
       ${labelText}
     </text>
-    <text x="${labelWidth + padding}" y="${height/2}" dominant-baseline="middle">
+    <text x="${labelWidth + padding}" y="${
+    height / 2
+  }" dominant-baseline="middle">
       ${messageText}
     </text>
   </g>
@@ -409,27 +458,30 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
 
 app.get("/ai-badge", async (c) => {
   const ip = c.req.raw.headers.get("cf-connecting-ip") || "unknown";
-  
+
   try {
-    const result = await c.env.DB.prepare(`
+    const result = await c.env.DB.prepare(
+      `
       SELECT COUNT(*) as count FROM rate_limits 
       WHERE ip = ?1 
       AND (julianday(CURRENT_TIMESTAMP) - julianday(last_reset)) * 24 * 60 < 1
-    `)
-    .bind(ip)
-    .first();
+    `
+    )
+      .bind(ip)
+      .first();
 
     if (((result?.count as number) || 0) >= 5) {
       return new Response(getErrorBadgeSVG("Rate Limited"), {
         status: 429,
         headers: {
           "Content-Type": "image/svg+xml; charset=utf-8",
-          "Retry-After": "60"
-        }
+          "Retry-After": "60",
+        },
       });
     }
 
-    const prompt = c.req.query("prompt") || "Generate a short inspirational message";
+    const prompt =
+      c.req.query("prompt") || "Generate a short inspirational message";
     const style = (c.req.query("style") as BadgeStyle["style"]) || "flat";
     const color = c.req.query("color") || "blue";
     const labelColor = c.req.query("label_color") || "gray";
@@ -449,8 +501,8 @@ app.get("/ai-badge", async (c) => {
     });
 
     let aiText = "Hello World!";
-    if (response && typeof response === 'object' && 'response' in response) {
-      aiText = (response as any).response
+    if (response && typeof response === "object" && "response" in response) {
+      aiText = (response as any).response;
     } else if (response) {
       aiText = String(response);
     }
@@ -464,14 +516,8 @@ app.get("/ai-badge", async (c) => {
     });
 
     return new Response(svg, {
-      headers: {
-        "Content-Type": "image/svg+xml; charset=utf-8",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0"
-      },
+      headers: commonHeaders
     });
-
   } catch (error) {
     console.error("AI badge error:", error);
     return new Response(getErrorBadgeSVG("AI Error"), {
@@ -480,4 +526,4 @@ app.get("/ai-badge", async (c) => {
   }
 });
 
-export default app
+export default app;

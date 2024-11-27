@@ -30,6 +30,9 @@ migrations_dir = "migrations"
 binding = "AI"
 
 
-# [observability]
-# enabled = true
-# head_sampling_rate = 1
+## wrangler.toml (wrangler v3.88.0^)
+[observability]
+enabled = true
+
+
+
