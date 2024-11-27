@@ -1,0 +1,35 @@
+name = "github-profile-views-counter"
+main = "src/index.ts"
+compatibility_date = "2024-11-26"
+
+# compatibility_flags = [ "nodejs_compat" ]
+
+# [vars]
+# MY_VAR = "my-variable"
+
+[[kv_namespaces]]
+binding = "RATELIMIT_KV"
+id = "27f844d0a2834d48b2ddc5f697c2e0cd"  # Create this using wrangler kv:namespace create RATELIMIT_KV
+preview_id = "c5d529b0d4aa4e46a6554afb02af452d"  # For local development
+
+# [[kv_namespaces]]
+# binding = "MY_KV_NAMESPACE"
+# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "visitors"
+database_id = "6ea11fa3-4aa5-406c-8675-253c1d7c38a8"  # Add missing character to ID
+migrations_dir = "migrations"
+
+[ai]
+binding = "AI"
+
+
+# [observability]
+# enabled = true
+# head_sampling_rate = 1
