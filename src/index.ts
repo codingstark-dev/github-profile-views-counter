@@ -727,22 +727,35 @@ app.get("/visitor-badge/:repo", async (c) => {
       const repo = c.req.param("repo");
       const username = repo.split("/")[0];
       const isGitHub = isGitHubRequest(c.req.raw);
-      const redis = Redis.fromEnv(c.env);
 
-      const viewKey = `views:${repo}`;
-      let count = parseInt((await redis.get(viewKey)) || "0");
+      let result = await c.env.DB.prepare(
+        "SELECT count FROM visitors WHERE repo = ?"
+      )
+        .bind(repo)
+        .first();
+
+      let count: number = typeof result?.count === "number" ? result.count : 0;
 
       if (isGitHub) {
         c.executionCtx.waitUntil(
           (async () => {
-            const [userResult] = await Promise.all([
-              c.env.DB.prepare(
-                `SELECT * FROM github_users WHERE username = ?1 AND (julianday(CURRENT_TIMESTAMP) - julianday(last_updated)) * 24 < 24`
-              )
-                .bind(username)
-                .first(),
-              redis.incr(viewKey),
-            ]);
+            await c.env.DB.prepare(
+              `INSERT INTO visitors (repo, count, last_updated)
+               VALUES (?1, 1, CURRENT_TIMESTAMP)
+               ON CONFLICT(repo) DO UPDATE SET
+               count = count + 1,
+               last_updated = CURRENT_TIMESTAMP`
+            )
+              .bind(repo)
+              .run();
+
+            const userResult = await c.env.DB.prepare(
+              `SELECT * FROM github_users 
+               WHERE username = ?1 
+               AND (julianday(CURRENT_TIMESTAMP) - julianday(last_updated)) * 24 < 24`
+            )
+              .bind(username)
+              .first();
 
             if (!userResult) {
               const githubUser = await getGitHubUser(username);
@@ -759,11 +772,8 @@ app.get("/visitor-badge/:repo", async (c) => {
             }
           })()
         );
-      }
 
-      if (!count && isGitHub) {
-        count = 1;
-        await redis.set(viewKey, count);
+        count++;
       }
 
       const style = (c.req.query("style") as BadgeStyle["style"]) || "flat";
