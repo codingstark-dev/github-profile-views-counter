@@ -14,8 +14,8 @@ app.get("/", (c) => {
     <!DOCTYPE html>
     <html lang="en">
       <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Badge Generator</title>
         <style>
           :root {
@@ -28,7 +28,8 @@ app.get("/", (c) => {
             box-sizing: border-box;
           }
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+              Oxygen, Ubuntu, Cantarell, sans-serif;
             max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
@@ -44,7 +45,7 @@ app.get("/", (c) => {
           .container {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
             padding: 24px;
           }
           .preview {
@@ -78,7 +79,8 @@ app.get("/", (c) => {
             font-weight: 500;
             color: var(--gray);
           }
-          input, select {
+          input,
+          select {
             width: 100%;
             padding: 8px 12px;
             border: 1px solid var (--border);
@@ -87,7 +89,8 @@ app.get("/", (c) => {
             font-size: 14px;
             transition: border-color 0.2s;
           }
-          input:focus, select:focus {
+          input:focus,
+          select:focus {
             border-color: var(--primary);
             outline: none;
             box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
@@ -193,7 +196,9 @@ app.get("/", (c) => {
         <h1>Badge Generator</h1>
         <div class="container">
           <div class="tabs">
-            <button onclick="switchTab('visitor')" class="active">Visitor Badge</button>
+            <button onclick="switchTab('visitor')" class="active">
+              Visitor Badge
+            </button>
             <button onclick="switchTab('ai')">AI Badge</button>
           </div>
 
@@ -201,7 +206,12 @@ app.get("/", (c) => {
             <div class="controls">
               <div class="control-group">
                 <label>Profile:</label>
-                <input type="text" id="repo" placeholder="username/repo" value="codingstark-dev" />
+                <input
+                  type="text"
+                  id="repo"
+                  placeholder="username/repo"
+                  value="codingstark-dev"
+                />
               </div>
               <div class="control-group">
                 <label>Style:</label>
@@ -235,7 +245,11 @@ app.get("/", (c) => {
             <div class="controls">
               <div class="control-group">
                 <label>Prompt:</label>
-                <input type="text" id="prompt" placeholder="Generate a message..." />
+                <input
+                  type="text"
+                  id="prompt"
+                  placeholder="Generate a message..."
+                />
               </div>
               <div class="control-group">
                 <label>Label:</label>
@@ -280,7 +294,9 @@ app.get("/", (c) => {
               <ul>
                 <li>1 request per 10 seconds per IP</li>
                 <li>Cache duration: 20 seconds</li>
-                <li>After cache expires, a new AI response will be generated</li>
+                <li>
+                  After cache expires, a new AI response will be generated
+                </li>
               </ul>
             </div>
           </div>
@@ -293,12 +309,15 @@ app.get("/", (c) => {
           <button onclick="copyUrl()" class="copy-btn">Copy URL</button>
         </div>
         <div class="footer">
-          Created by <a href="https://github.com/codingstark-dev" target="_blank">Himanshu - codingstark</a>
+          Created by
+          <a href="https://github.com/codingstark-dev" target="_blank"
+            >Himanshu - codingstark</a
+          >
         </div>
         <script>
-          let currentTab = 'visitor';
+          let currentTab = "visitor";
           let updateTimeout;
-          
+
           function debounce(func, wait) {
             return function executedFunction(...args) {
               const later = () => {
@@ -309,117 +328,125 @@ app.get("/", (c) => {
               updateTimeout = setTimeout(later, wait);
             };
           }
-          
+
           const setPreviewLoading = (loading) => {
-            const preview = document.querySelector('.preview');
+            const preview = document.querySelector(".preview");
             if (loading) {
-              preview.classList.add('loading');
+              preview.classList.add("loading");
             } else {
-              preview.classList.remove('loading');
+              preview.classList.remove("loading");
             }
           };
-          
+
           const debouncedUpdatePreview = debounce(() => {
             setPreviewLoading(true);
             const baseUrl = window.location.origin;
             let url;
-            
-            if (currentTab === 'visitor') {
-              const repo = document.getElementById('repo').value || 'username/repo';
-              const style = document.getElementById('style').value;
-              const color = document.getElementById('color').value;
-              const label = document.getElementById('label').value;
-              
-              url = \`\${baseUrl}/visitor-badge/\${repo}?style=\${style}&color=\${color}&label=\${encodeURIComponent(label)}\`;
+
+            if (currentTab === "visitor") {
+              const repo =
+                document.getElementById("repo").value || "username/repo";
+              const style = document.getElementById("style").value;
+              const color = document.getElementById("color").value;
+              const label = document.getElementById("label").value;
+
+              url = \`\${baseUrl}/visitor-badge/\${repo}?style=\${style}&color=\${color}&label=\${encodeURIComponent(
+                label
+              )}\`;
             } else {
-              const prompt = document.getElementById('prompt').value || 'Generate a message';
-              const style = document.getElementById('ai-style').value;
-              const color = document.getElementById('ai-color').value;
-              const label = document.getElementById('ai-label').value;
-              
-              url = \`\${baseUrl}/ai-badge?prompt=\${encodeURIComponent(prompt)}&style=\${style}&color=\${color}&label=\${encodeURIComponent(label)}\`;
+              const prompt =
+                document.getElementById("prompt").value || "Generate a message";
+              const style = document.getElementById("ai-style").value;
+              const color = document.getElementById("ai-color").value;
+              const label = document.getElementById("ai-label").value;
+
+              url = \`\${baseUrl}/ai-badge?prompt=\${encodeURIComponent(
+                prompt
+              )}&style=\${style}&color=\${color}&label=\${encodeURIComponent(
+                label
+              )}\`;
             }
-            
-            const previewImg = document.getElementById('preview');
+
+            const previewImg = document.getElementById("preview");
             previewImg.onload = () => setPreviewLoading(false);
             previewImg.onerror = () => setPreviewLoading(false);
             previewImg.src = url;
-            document.getElementById('url').value = url;
+            document.getElementById("url").value = url;
           }, 500);
 
           function switchTab(tab) {
             currentTab = tab;
-            document.getElementById('visitor-tab').style.display = tab === 'visitor' ? 'block' : 'none';
-            document.getElementById('ai-tab').style.display = tab === 'ai' ? 'block' : 'none';
-            
-            const tabs = document.querySelectorAll('.tabs button');
-            tabs.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
+            document.getElementById("visitor-tab").style.display =
+              tab === "visitor" ? "block" : "none";
+            document.getElementById("ai-tab").style.display =
+              tab === "ai" ? "block" : "none";
+
+            const tabs = document.querySelectorAll(".tabs button");
+            tabs.forEach((btn) => btn.classList.remove("active"));
+            event.target.classList.add("active");
+
             debouncedUpdatePreview();
           }
 
           function copyUrl() {
-            const urlInput = document.getElementById('url');
+            const urlInput = document.getElementById("url");
             urlInput.select();
-            document.execCommand('copy');
-            
-            const btn = document.querySelector('.copy-btn');
+            document.execCommand("copy");
+
+            const btn = document.querySelector(".copy-btn");
             const originalText = btn.textContent;
-            btn.textContent = 'Copied!';
+            btn.textContent = "Copied!";
             setTimeout(() => {
               btn.textContent = originalText;
             }, 2000);
           }
 
           function updateAIPreset() {
-            const preset = document.getElementById('ai-preset').value;
-            const promptInput = document.getElementById('prompt');
-            const labelInput = document.getElementById('ai-label');
-            const colorInput = document.getElementById('ai-color');
-            
+            const preset = document.getElementById("ai-preset").value;
+            const promptInput = document.getElementById("prompt");
+            const labelInput = document.getElementById("ai-label");
+            const colorInput = document.getElementById("ai-color");
+
             const presets = {
               default: {
-                prompt: 'Generate a message',
-                label: 'AI Says',
-                color: 'blue'
+                prompt: "Generate a message",
+                label: "AI Says",
+                color: "blue",
               },
               quote: {
-                prompt: 'Generate an inspiring quote',
-                label: 'Quote',
-                color: 'purple'
+                prompt: "Generate an inspiring quote",
+                label: "Quote",
+                color: "purple",
               },
               motivation: {
-                prompt: 'Generate a motivational message',
-                label: 'Motivation',
-                color: 'green'
+                prompt: "Generate a motivational message",
+                label: "Motivation",
+                color: "green",
               },
               wisdom: {
-                prompt: 'Share a wise thought',
-                label: 'Wisdom',
-                color: 'orange'
+                prompt: "Share a wise thought",
+                label: "Wisdom",
+                color: "orange",
               },
               fun: {
-                prompt: 'Tell something fun',
-                label: 'Fun Fact',
-                color: 'pink'
-              }
+                prompt: "Tell something fun",
+                label: "Fun Fact",
+                color: "pink",
+              },
             };
-            
+
             const selectedPreset = presets[preset];
             promptInput.value = selectedPreset.prompt;
             labelInput.value = selectedPreset.label;
             colorInput.value = selectedPreset.color;
-            
+
             debouncedUpdatePreview();
           }
 
-          
-          document.querySelectorAll('input, select').forEach(input => {
-            input.addEventListener('input', debouncedUpdatePreview);
+          document.querySelectorAll("input, select").forEach((input) => {
+            input.addEventListener("input", debouncedUpdatePreview);
           });
 
-          
           debouncedUpdatePreview();
         </script>
       </body>
@@ -461,19 +488,17 @@ async function rateLimit(c: any, next: () => Promise<any>) {
     const redis = Redis.fromEnv(c.env);
     const key = `${KEY_PREFIX}${ip}`;
     const now = Math.floor(Date.now() / 1000);
-    
-    
+
     const count = await redis.zcard(key);
     const clearBefore = now - WINDOW;
-    
-    
+
     await redis.zremrangebyscore(key, 0, clearBefore);
-    
+
     if (count >= LIMIT) {
       const oldestTimestamp = await redis.zrange(key, 0, 0);
       const resetTime = parseInt(oldestTimestamp[0] as string) + WINDOW;
       const remainingTime = resetTime - now;
-      
+
       return new Response(getErrorBadgeSVG("Rate Limited"), {
         status: 429,
         headers: {
@@ -486,7 +511,6 @@ async function rateLimit(c: any, next: () => Promise<any>) {
       });
     }
 
-    
     await redis.zadd(key, { score: now, member: now.toString() });
     await redis.expire(key, WINDOW);
 
@@ -677,7 +701,8 @@ async function getGitHubUser(username: string): Promise<GitHubUser | null> {
   try {
     const response = await fetch(`https://api.github.com/users/${username}`, {
       headers: {
-        "User-Agent": "GitHub-Profile-Views-Counter",
+        "User-Agent": "gh.codingstark.com",
+        Accept: "application/json",
       },
     });
 
@@ -705,7 +730,7 @@ app.get("/visitor-badge/:repo", async (c) => {
       const redis = Redis.fromEnv(c.env);
 
       const viewKey = `views:${repo}`;
-      let count = parseInt(await redis.get(viewKey) || "0");
+      let count = parseInt((await redis.get(viewKey)) || "0");
 
       if (isGitHub) {
         c.executionCtx.waitUntil(
@@ -777,15 +802,14 @@ app.get("/visitor-badge/:repo", async (c) => {
 });
 
 function sanitizeText(text: string): string {
-  
   return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
-    .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') 
-    .substring(0, 100) 
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
+    .substring(0, 100)
     .trim();
 }
 
@@ -801,7 +825,6 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
   const labelText = sanitizeText(label);
   const messageText = sanitizeText(text);
 
-  
   const styleConfigs = {
     flat: {
       height: 20,
@@ -861,10 +884,8 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
   const fontSize = config.fontSize * scale;
   const padding = config.paddingH * scale;
 
-  
   const sidePadding = style === "for-the-badge" ? padding * 1.5 : padding;
 
-  
   const labelWidth = Math.max(
     measureTextWidth(labelText, fontSize) + sidePadding * 1.5,
     40 * scale
@@ -881,7 +902,6 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
   const radius = config.radius * scale;
   const innerRadius = config.rounded ? height / 2 : radius;
 
-  
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${totalWidth}" height="${height}">
   <title>${labelText}: ${messageText}</title>
@@ -897,7 +917,11 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
   <g clip-path="url(#r)">
     <rect width="${labelWidth}" height="${height}" fill="#${lblColor}"/>
     <rect x="${labelWidth}" width="${messageWidth}" height="${height}" fill="#${bgColor}"/>
-    ${config.gradient ? `<rect width="${totalWidth}" height="${height}" fill="url(#s)"/>` : ""}
+    ${
+      config.gradient
+        ? `<rect width="${totalWidth}" height="${height}" fill="url(#s)"/>`
+        : ""
+    }
   </g>
   ${
     config.shadow
@@ -922,22 +946,21 @@ function getAIBadgeSVG(text: string, options: BadgeStyle = {}) {
 </svg>`;
 }
 
-
 function measureTextWidth(text: string, fontSize: number): number {
-  
-  return text.split('').reduce((width, char) => {
+  return text.split("").reduce((width, char) => {
     if (char.match(/[A-Z]/)) return width + fontSize * 0.7;
     if (char.match(/[a-z]/)) return width + fontSize * 0.5;
     if (char.match(/[0-9]/)) return width + fontSize * 0.6;
     if (char.match(/[!@#$%^&*()]/)) return width + fontSize * 0.4;
-    if (char.match(/[\u0080-\uFFFF]/)) return width + fontSize * 1; 
-    return width + fontSize * 0.3; 
+    if (char.match(/[\u0080-\uFFFF]/)) return width + fontSize * 1;
+    return width + fontSize * 0.3;
   }, 0);
 }
 
 app.get("/ai-badge", async (c) => {
   const ip = c.req.raw.headers.get("cf-connecting-ip") || "unknown";
-  const prompt = c.req.query("prompt") || "Generate a short inspirational message";
+  const prompt =
+    c.req.query("prompt") || "Generate a short inspirational message";
   const redis = Redis.fromEnv(c.env);
   const cacheKey = `ai:${prompt}`;
   const rateLimitKey = `ai:ratelimit:${ip}`;
@@ -945,12 +968,11 @@ app.get("/ai-badge", async (c) => {
   try {
     const now = Date.now();
     const lastRequest = await redis.get(rateLimitKey);
-    
-    
+
     if (lastRequest) {
       const timeSinceLastRequest = now - parseInt(String(lastRequest));
-      if (timeSinceLastRequest < 10000) { 
-        const waitTime = Math.ceil((10000 - timeSinceLastRequest)/1000);
+      if (timeSinceLastRequest < 10000) {
+        const waitTime = Math.ceil((10000 - timeSinceLastRequest) / 1000);
         const svg = getBadgeSVG(waitTime, {
           label: "Rate Limit",
           message: `Wait ${waitTime}s`,
@@ -958,7 +980,7 @@ app.get("/ai-badge", async (c) => {
           labelColor: "gray",
           style: (c.req.query("style") as BadgeStyle["style"]) || "flat",
         });
-        
+
         return new Response(svg, {
           status: 429,
           headers: {
@@ -969,12 +991,12 @@ app.get("/ai-badge", async (c) => {
       }
     }
 
-    
-    
     const cachedResponse = await redis.get(cacheKey);
     if (cachedResponse) {
       const svg = getAIBadgeSVG(
-        typeof cachedResponse === 'string' ? cachedResponse : String(cachedResponse),
+        typeof cachedResponse === "string"
+          ? cachedResponse
+          : String(cachedResponse),
         {
           style: (c.req.query("style") as BadgeStyle["style"]) || "flat",
           color: c.req.query("color") || "blue",
@@ -987,14 +1009,14 @@ app.get("/ai-badge", async (c) => {
       return new Response(svg, { headers: commonHeaders });
     }
 
-    
-    await redis.set(rateLimitKey, String(now), { ex: 10 }); 
+    await redis.set(rateLimitKey, String(now), { ex: 10 });
 
     const response = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
       messages: [
         {
           role: "system",
-          content: "You are a helpful chatbot. Keep responses concise and under 50 characters. You can use emojis and special characters.",
+          content:
+            "You are a helpful chatbot. Keep responses concise and under 50 characters. You can use emojis and special characters.",
         },
         { role: "user", content: prompt },
       ],
@@ -1009,8 +1031,7 @@ app.get("/ai-badge", async (c) => {
       aiText = String(response).trim();
     }
 
-    
-    await redis.set(cacheKey, aiText, { ex: 20 }); 
+    await redis.set(cacheKey, aiText, { ex: 20 });
 
     const svg = getAIBadgeSVG(aiText, {
       style: (c.req.query("style") as BadgeStyle["style"]) || "flat",
@@ -1023,15 +1044,18 @@ app.get("/ai-badge", async (c) => {
     return new Response(svg, { headers: commonHeaders });
   } catch (error) {
     console.error("AI badge error:", error);
-    return new Response(getBadgeSVG(0, {
-      label: "Error",
-      message: "AI Service Error",
-      color: "red",
-      labelColor: "gray",
-      style: (c.req.query("style") as BadgeStyle["style"]) || "flat",
-    }), {
-      headers: commonHeaders,
-    });
+    return new Response(
+      getBadgeSVG(0, {
+        label: "Error",
+        message: "AI Service Error",
+        color: "red",
+        labelColor: "gray",
+        style: (c.req.query("style") as BadgeStyle["style"]) || "flat",
+      }),
+      {
+        headers: commonHeaders,
+      }
+    );
   }
 });
 
